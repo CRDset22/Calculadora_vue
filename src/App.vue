@@ -50,7 +50,7 @@
       case 'multiplicacao':
         return x * y;
       case 'divisao':
-        return x === 0 ? 'Indefinido' : x / y;
+        return y === 0 ? 'Indefinido' : x / y;
       default:
         return '';
     }

@@ -1,0 +1,193 @@
+==================================================================
+RELATÓRIO DE REVISÃO - CALCULADORA VUE
+Revisão de src/App.vue, componentes, estilos e organização do projeto
+==================================================================
+
+Este projeto (Vue 3 + Vite) foi revisado com testes de verdade, não só
+leitura de código: rodei "npm install", montei os componentes com Vue
+Test Utils + Vitest simulando cliques e digitação real, e também rodei
+"npm run build" para confirmar que tudo compila. Vários itens que
+pareciam suspeitos à primeira vista foram TESTADOS e descartados por
+não serem bugs — estão documentados na Parte 2 para você entender o
+porquê, e não perder tempo "corrigindo" algo que já funciona.
+
+
+------------------------------------------------------------------
+PARTE 1 - BUGS REAIS (confirmados por teste)
+------------------------------------------------------------------
+
+[BUG-01] Divisão por zero verificava o número errado
+  Antes (src/App.vue):
+      case 'divisao':
+          return x === 0 ? 'Indefinido' : x / y;
+  Problema: a checagem testava X (o dividendo), mas quem não pode ser
+            zero numa divisão é o DIVISOR (Y). Na prática:
+              X=8, Y=0  -> resultado mostrado: "Infinity" (deveria ser
+                            "Indefinido" — divisão por zero de verdade)
+              X=0, Y=8  -> resultado mostrado: "Indefinido" (deveria
+                            ser simplesmente 0 — zero dividido por
+                            qualquer número é zero)
+            Confirmado rodando a calculadora de verdade (Vitest + Vue
+            Test Utils) antes da correção.
+  Depois:
+      case 'divisao':
+          return y === 0 ? 'Indefinido' : x / y;
+  Um teste automatizado permanente para os dois casos foi adicionado
+  em src/components/__tests__/App.spec.js, para essa regressão nunca
+  mais passar despercebida.
+
+[BUG-02] CSS de scaffold quebrava o layout em telas grandes
+  Antes (src/assets/main.css):
+      @media (min-width: 1024px) {
+          body { display: flex; place-items: center; }
+          #app { display: grid; grid-template-columns: 1fr 1fr; }
+      }
+  Problema: esse trecho é o CSS padrão gerado pelo "npm create vue" para
+            a página de boas-vindas (que tem duas colunas: logo de um
+            lado, links do outro). A calculadora real tem só UM elemento
+            dentro de #app (a .container inteira). Ao aplicar um grid de
+            2 colunas nesse único elemento, em qualquer tela de
+            1024px ou mais larga (a maioria dos monitores/notebooks) a
+            calculadora inteira é empurrada para a coluna da esquerda,
+            deixando a metade direita da tela vazia — em vez de
+            centralizada, como o próprio .container (com
+            "margin: 0 auto") deixa claro que era a intenção.
+  Depois: o bloco inteiro foi removido. Sem ele, o body/#app default
+          (bloco simples, sem grid) deixa a .container se centralizar
+          normalmente pelo margin:0 auto que ela já tinha.
+
+
+------------------------------------------------------------------
+PARTE 2 - SUSPEITAS INVESTIGADAS E DESCARTADAS (não eram bugs)
+------------------------------------------------------------------
+
+Estes itens pareciam suspeitos por fugirem do padrão do resto do
+código, mas testes reais (montando os componentes e simulando cliques)
+confirmaram que funcionam corretamente. Documentando para você não
+"corrigir" algo que já está certo:
+
+[OK-01] `:set-Value="updateOperation"` no App.vue (com V maiúsculo no
+        meio do nome do atributo)
+  Por que parecia suspeito: todos os outros bindings usam
+  kebab-case totalmente minúsculo (set-value-x, set-value-y), e esse
+  aqui tem um "V" maiúsculo isolado — parecia digitação errada que
+  poderia quebrar a ligação com a prop "setValue" do SelectField.
+  Teste feito: montei o App inteiro, selecionei "soma" com X=10 e
+  Y=5 e o resultado mostrado foi 15 — ou seja, a seleção do operador
+  FUNCIONA. O motivo: o Vue converte nomes de atributo para camelCase
+  usando uma função (camelize) que capitaliza a primeira letra de cada
+  parte depois do hífen — e "Value" já começa com V maiúsculo, então
+  "set-Value" também vira "setValue" (idêntico ao resultado de
+  "set-value"). Funciona, mas é inconsistente. Deixei como está para
+  não mexer no que já funciona; se quiser, pode renomear para
+  "set-value" só por uniformidade visual com o resto do arquivo.
+
+[OK-02] `@click="clearValues"` no ClearButton.vue, sem o prefixo
+        "props." usado em todos os outros componentes
+  Por que parecia suspeito: em InputFields, SelectField e ResultField,
+  toda prop é acessada como "props.algumaCoisa" dentro do template.
+  Só o ClearButton usa o nome "cru" (clearValues), sem "props.".
+  Teste feito: montei o App, cliquei no botão "Limpar" de verdade, e
+  os campos e o resultado foram zerados corretamente. O motivo: no
+  Vue, props declaradas com defineProps ficam automaticamente
+  acessíveis no template pelo nome direto (sem precisar do prefixo
+  "props."), então as duas formas ("props.clearValues" e
+  "clearValues") são equivalentes e válidas. É só uma diferença de
+  estilo entre os arquivos, não um erro.
+
+
+------------------------------------------------------------------
+PARTE 3 - LIMPEZA E ORGANIZAÇÃO
+------------------------------------------------------------------
+
+[ORG-01] README.md era o texto padrão do scaffold
+  Antes: "This template should help get you started developing with
+         Vue 3 in Vite" — nenhuma menção ao que o projeto realmente
+         é ou faz.
+  Depois: README reescrito do zero, descrevendo o projeto de verdade
+          (o que ele faz, como rodar, estrutura de pastas e como
+          rodar os testes).
+
+[ORG-02] Arquivo de imagem sem uso (src/assets/logo.svg)
+  Problema: o logo padrão do scaffold Vue não era referenciado em
+            nenhum componente ou CSS — arquivo morto.
+  Depois: removido.
+
+[ORG-03] CSS morto: regras para "a" e ".green"
+  Problema: main.css tinha estilos para links (<a>) e para uma classe
+            ".green" — nenhum dos dois existe em qualquer lugar do
+            app (sobra do scaffold, junto com o bug do grid do
+            BUG-02).
+  Depois: removidos.
+
+[ORG-04] Sem licença
+  Problema: nenhum arquivo LICENSE no projeto.
+  Depois: adicionado LICENSE (MIT), a licença mais comum para
+          projetos de estudo/portfólio open-source.
+
+[ORG-05] Quebras de linha inconsistentes (CRLF vs LF)
+  Observação: ao extrair o .rar, o "git status" mostrou TODOS os
+              arquivos como "modificados" — não por conteúdo (as
+              inserções e remoções batiam exatamente, linha por
+              linha), mas porque o pacote usava quebra de linha estilo
+              Windows (CRLF) e a extração/edição normaliza para LF.
+              Sem um padrão definido, isso gera "diffs" gigantes e
+              ruidosos no Git para arquivos que na prática não
+              mudaram.
+  Depois: adicionado .gitattributes fixando LF para todo o
+          repositório, e todo o texto do projeto foi normalizado
+          para LF antes da entrega.
+
+[ORG-06] index.html com idioma e título do scaffold
+  Antes: <html lang="en"> e <title>Vite App</title> — mas o app
+         inteiro é em português.
+  Depois: lang="pt-br", título "Calculadora Aritmética" e uma
+          <meta name="description"> foi acrescentada.
+
+[ORG-07] package.json incompleto para publicação
+  Antes: version "0.0.0", sem description nem license.
+  Depois: version "1.0.0", description explicando o projeto, e
+          "license": "MIT" (batendo com o arquivo LICENSE).
+
+[ORG-08] Sem nenhum teste automatizado
+  Observação: o projeto não tinha nenhuma suíte de testes. Foi
+              acrescentada (Vitest + Vue Test Utils) cobrindo soma,
+              divisão (incluindo os dois casos do BUG-01) e o botão
+              Limpar — ver README, seção "Testes automatizados".
+
+
+------------------------------------------------------------------
+RESUMO
+------------------------------------------------------------------
+Bugs reais corrigidos:                 2
+Suspeitas testadas e descartadas:      2  (documentadas para não
+                                           gerar retrabalho)
+Itens de organização/GitHub:           8
+Total de itens corrigidos:            10
+
+Como foi validado:
+  - "npm install" + "npm run build" rodados do zero, sem erros.
+  - Suíte de testes (Vitest + Vue Test Utils) simulando digitação e
+    cliques reais nos componentes, 5 testes, todos passando.
+  - Cada suspeita de bug foi testada empiricamente antes de ser
+    classificada como "bug real" ou "falso alarme" — duas delas
+    (OK-01 e OK-02) na verdade funcionavam corretamente, e só
+    pareciam suspeitas por inconsistência de estilo.
+
+Lições principais:
+  1. Nem toda inconsistência de estilo é um bug — o Vue tem mecanismos
+     (camelize automático de atributos, exposição direta de props no
+     template) que tornam algumas formas "estranhas" de escrever
+     perfeitamente funcionais. Teste antes de "corrigir".
+  2. CSS deixado por um gerador de projeto (scaffold) pode conter
+     regras pensadas para uma tela que não existe mais no seu app —
+     vale conferir cada media query contra o layout real, não só
+     contra o preview em uma única largura de tela.
+  3. Divisão por zero: sempre cheque o DIVISOR, nunca o dividendo.
+  4. Um .gitattributes com quebra de linha fixa evita diffs gigantes
+     e "tudo modificado" quando o projeto circula entre Windows e
+     Linux/Mac.
+
+==================================================================
+Fim do relatório.
+==================================================================

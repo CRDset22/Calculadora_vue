@@ -1,0 +1,11 @@
+# Normaliza as quebras de linha de todo o repositório para LF.
+# Sem isso, arquivos extraídos ou editados no Windows entram com CRLF
+# e cada novo commit mostra o arquivo inteiro como "modificado" mesmo
+# sem nenhuma mudança real de conteúdo.
+* text=auto eol=lf
+
+# Arquivos binários: nunca converter
+*.ico binary
+*.png binary
+*.jpg binary
+*.svg binary

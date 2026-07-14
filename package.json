@@ -1,18 +1,24 @@
 {
   "name": "calculadoravue",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Calculadora aritmética simples (soma, subtração, multiplicação e divisão) feita com Vue 3 e Vite.",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "vue": "^3.4.21"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
-    "vite": "^5.1.6"
+    "@vue/test-utils": "^2.4.11",
+    "jsdom": "^29.1.1",
+    "vite": "^5.1.6",
+    "vitest": "^4.1.10"
   }
 }
