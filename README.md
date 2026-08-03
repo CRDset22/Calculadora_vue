@@ -97,7 +97,7 @@ futura regressão.
 ## Observações desta revisão
 
 Esta versão do projeto passou por uma revisão completa — bugs, imagens/CSS
-quebrados e organização geral. A lista detalhada de tudo que foi encontrado
+quebrados e organização geral. A lista detalhada(bastante) de tudo que foi encontrado
 e corrigido, incluindo o que foi **investigado e descartado por não ser
 um bug de verdade** (após testes automatizados confirmarem que funcionava),
 está no arquivo `erros.txt`.
